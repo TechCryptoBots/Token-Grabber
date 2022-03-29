@@ -1,4 +1,5 @@
 from re import M
+from weakref import proxy
 import requests
 import json
 from account import Account
@@ -6,25 +7,60 @@ from discord_grabber import get_discord_token
 from twitter_grabber import get_twitter_tokens
 from tqdm import tqdm
 
-def load_credentials_from_file(filename):
+
+def load_data_from_file(filename, line_reader_function):
+    print(f"Loading credentials from {filename}")
     credentials = list()
     i = 1
     with open(filename, "r") as f:
-        line = f.readline().replace(" ", "")
-        data = {}
-        try: 
-            data["username"], data["password"] = line.split(":")
+        for line in f:
+            line = line.replace(" ", "").replace("\n", "")
+            data = {}
+            try: 
+                data = line_reader_function(line)
+            except Exception:
+                print(f"Couldn't read line {i}")
+                data["username"], data["password"] = "", ""
+        
             credentials.append(data)
-        except Exception:
-            print(f"Couldn't read line {i}")
-        i += 1
+            i += 1
+        
     return credentials
 
-def load_credentials(discord_filename, twitter_filename):
+# def load_proxies_from_file(filename):
+#     print(f"Loading proxies from {filename}")
+#     proxies = list()
+#     i = 1
+#     with open(filename, "r") as f:
+#         line = f.readline().replace(" ", "")
+#         proxies.append(line)
+#         i += 1
+#     return proxies
+
+def load_credentials(discord_filename, twitter_filename, proxy_filename=""):
     credentials = list()
     
-    discord_credentials = load_credentials_from_file(discord_filename)
-    twitter_credentials = load_credentials_from_file(twitter_filename)
+    def discord_reader_function(line):
+        if line == "":
+            return {"username": "", "password": ""}
+        data = {}
+        data["username"], data["password"] = line.split(":")
+        return data
+    
+    discord_credentials = load_data_from_file(discord_filename, discord_reader_function)
+    
+    def twitter_reader_function(line):
+        if len(line.split(":")) == 2:
+            return {"username": line.split(":")[0], "password": line.split(":")[1]}
+        elif len(line.split(":")) >= 3:
+            return {"username": line.split(":")[0], "password": line.split(":")[1], "phone": line.split(":")[2]}
+        else:
+            return {"username": "", "password": ""}
+        
+    twitter_credentials = load_data_from_file(twitter_filename, twitter_reader_function)
+    proxies = []
+    if proxy_filename != "":
+        proxies = load_data_from_file(proxy_filename, lambda line: {"proxy": line})
     for i in range(max(len(discord_credentials), len(twitter_credentials))):
         account = {}
         
@@ -33,6 +69,9 @@ def load_credentials(discord_filename, twitter_filename):
 
         if i < len(twitter_credentials):
             account["twitter"] = twitter_credentials[i]
+        
+        if i < len(proxies):
+            account["proxy"] = proxies[i]
         
         credentials.append(account)
     
@@ -53,16 +92,16 @@ if __name__ == "__main__":
     accounts = []
     
     for credentials_account in tqdm(credentials_accounts):
+        discord_token = get_discord_token(credentials_account["discord"]) if credentials_account.get("discord") else ""
+        twitter_auth_token, twitter_access_token = get_twitter_tokens(credentials_account["twitter"]) if credentials_account.get("twitter") else ("", "")
+        
         account = Account()
-
-        discord_token = get_discord_token(credentials_account["discord"])
-        account.discord_token = discord_token if discord_token != None else ""
-
-        twitter_auth_token, twitter_access_token = get_twitter_tokens(credentials_account)
-        account.twitter_token = twitter_auth_token if twitter_auth_token != None else ""
+        account.discord_token = discord_token 
+        account.twitter_token = twitter_auth_token 
+        account.twitter_access_token = twitter_access_token
         accounts.append(account)
         
-    save_accounts_state(accounts)
+        save_accounts_state(accounts)
         
         
         

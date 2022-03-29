@@ -3,7 +3,7 @@ import hashlib
 
 class Account:
 
-    def __init__(self, name='', last_name='', email='', twitter_token='', discord_token='', proxy='', custom_data={}, custom_answers={}) -> None:
+    def __init__(self, name='', last_name='', email='', twitter_token='', discord_token='', proxy='', custom_data={}, custom_answers={}, access_token='') -> None:
         self.twitter_token = twitter_token
         self.discord_token = discord_token
         self.name = name
@@ -12,6 +12,7 @@ class Account:
         self.email = email
         self.custom_data = custom_data
         self.custom_answers = custom_answers
+        self.twitter_access_token = access_token
 
     def get_profile_dir(self) -> str:
         m = hashlib.sha256()
@@ -23,11 +24,12 @@ class Account:
             "name": self.name,
             "last_name": self.last_name,
             "twitter_token": self.twitter_token,
+            "twitter_access_token": self.twitter_access_token,
             "proxy": self.proxy,
             "custom_data": self.custom_data,
             "custom_answers": self.custom_answers,
             "discord_token": self.discord_token,
-            "email": self.email
+            "email": self.email,
         }
         
         return data

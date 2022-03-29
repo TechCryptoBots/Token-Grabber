@@ -2,6 +2,9 @@ import json
 import requests
 
 def get_discord_token(account):
+    if account["username"] == "" or account["password"] == "":
+        return ""
+    
     data = {
         "login": account["username"],
         "password": account["password"],
@@ -17,7 +20,7 @@ def get_discord_token(account):
         token = json_response["token"]
         return token
     else:
-        print(f"Error during getting token for account {account}")
-        return None
+        print(f"\nError during getting discord token for account {account}")
+        return ""
 
 

@@ -2,7 +2,7 @@ from click import password_option
 from requests_oauthlib import OAuth1Session
 import requests
 import sys
-from selenium.webdriver import Chrome, ChromeOptions
+from seleniumwire.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import WebDriverException
 
@@ -52,6 +52,8 @@ def get_webdriver():
     options = ChromeOptions()
     options.add_argument('--headless')
     options.add_argument('window-size=1920x1080')    
+    options.add_argument("--log-level=3")
+    options.add_experimental_option('excludeSwitches', ['enable-logging'])
     driver = Chrome(options=options)
     return driver
 
@@ -59,33 +61,48 @@ def get_authorization_token_and_pin(authorization_url: str, account: dict):
     driver = get_webdriver()
     driver.get(authorization_url)
     
+    # Authorize with credentials
     auth_form = driver.find_element(By.TAG_NAME, "form")
     
     username_input = auth_form.find_element(By.ID, "username_or_email")
-    driver.execute_script("arguments[0].value=\"" + account["twitter"]["username"] + "\";", username_input)
+    driver.execute_script("arguments[0].value=\"" + account["username"] + "\";", username_input)
 
     password_input = auth_form.find_element(By.ID, "password")
-    driver.execute_script("arguments[0].value=\"" + account["twitter"]["password"] + "\";", password_input)
+    driver.execute_script("arguments[0].value=\"" + account["password"] + "\";", password_input)
 
     auth_form.submit()
     
+    challenge_forms = driver.find_elements(By.ID, "login-challenge-form")
+    if len(challenge_forms) > 0:
+        challenge_form = challenge_forms[0]
+        phone_number_field = challenge_form.find_element(By.ID, "challenge_response")
+        driver.execute_script("arguments[0].value=\"" + account["phone"] + "\";", phone_number_field)
+        challenge_form.submit()
+        
+    pin = ""
     try:
         code_element = driver.find_element(By.TAG_NAME, "code")
         pin = code_element.text
     except Exception:
-        print("Couldn't retrieve access token")
+        print("\nCouldn't retrieve twitter access token")
         
     auth_token = driver.get_cookie("auth_token")["value"]
     return auth_token, pin
 
 def get_twitter_tokens(account: dict):
-    # try:
-    resource_owner_oauth_token, resource_owner_oauth_token_secret = request_token()
-    authorization_url = get_user_authorization_url(resource_owner_oauth_token)
-    auth_token, pin = get_authorization_token_and_pin(authorization_url, account)
-    access_token, access_token_secret, user_id, screen_name = get_user_access_tokens(resource_owner_oauth_token, resource_owner_oauth_token_secret, pin)
-    return auth_token, access_token
-    # except Exception:
-    #     print(f"Problem getting twitter token for account {account}")
-    #     return None, None
+    if account["username"] == "" or account["password"] == "":
+        return "", ""
+    
+    try:
+        resource_owner_oauth_token, resource_owner_oauth_token_secret = request_token()
+        authorization_url = get_user_authorization_url(resource_owner_oauth_token)
+        auth_token, pin = get_authorization_token_and_pin(authorization_url, account)
+        if pin != "":
+            access_token, access_token_secret, user_id, screen_name = get_user_access_tokens(resource_owner_oauth_token, resource_owner_oauth_token_secret, pin)
+            return auth_token, access_token
+        else: 
+            return auth_token, ""
+    except Exception:
+        print(f"\nError during getting twitter token for account {account}")
+        return None, None
     
