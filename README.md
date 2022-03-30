@@ -9,7 +9,12 @@ You can also fill out only discord or only twitter accounts, in this case the bo
 
 To launch you need Python 3.9+
 
-After installing run in console:
+Before launching switch to the bot folder in console and run:
+```
+pip install -r requirements.txt
+```
+
+After that run in console:
 ```
 python main.py
 ```
