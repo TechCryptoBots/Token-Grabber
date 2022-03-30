@@ -12,23 +12,19 @@ CONSUMER_SECRET = "PTkxtqzZB9mdT8OccIrs2Dh7zOtI8CQyAqyyLid7axQtASxGGB"
 def request_token(proxy=""):
     retries_amount = 2
     
+    oauth = OAuth1Session(CONSUMER_KEY, client_secret=CONSUMER_SECRET, callback_uri='oob')
+    oauth.proxies = {'all': proxy}
+    url = "https://api.twitter.com/oauth/request_token"
     while retries_amount > 0:
         try:
-            oauth = OAuth1Session(CONSUMER_KEY, client_secret=CONSUMER_SECRET, callback_uri='oob')
-            oauth.proxies = {'all': proxy}
-
-            url = "https://api.twitter.com/oauth/request_token"
-
-            try:
-                response = oauth.fetch_request_token(url)
-                resource_owner_oauth_token = response.get('oauth_token')
-                resource_owner_oauth_token_secret = response.get('oauth_token_secret')
-            except requests.exceptions.RequestException as e:
-                print(e)
-                sys.exit(120)
+            response = oauth.fetch_request_token(url)
+            resource_owner_oauth_token = response.get('oauth_token')
+            resource_owner_oauth_token_secret = response.get('oauth_token_secret')
         except Exception:
             print("Cannot get twitter requests token, retrying...")
             retries_amount -= 1
+            if retries_amount == 0:
+                raise Exception("Couldn't get twitter requests token") 
         
         return resource_owner_oauth_token, resource_owner_oauth_token_secret
 
