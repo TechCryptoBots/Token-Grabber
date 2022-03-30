@@ -1,4 +1,3 @@
-from click import password_option
 from requests_oauthlib import OAuth1Session
 import requests
 import sys
