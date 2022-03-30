@@ -10,21 +10,27 @@ CONSUMER_SECRET = "PTkxtqzZB9mdT8OccIrs2Dh7zOtI8CQyAqyyLid7axQtASxGGB"
 
 # Request an OAuth Request Token. This is the first step of the 3-legged OAuth flow. This generates a token that you can use to request user authorization for access.
 def request_token(proxy=""):
-
-    oauth = OAuth1Session(CONSUMER_KEY, client_secret=CONSUMER_SECRET, callback_uri='oob')
-    oauth.proxies = {'all': proxy}
-
-    url = "https://api.twitter.com/oauth/request_token"
-
-    try:
-        response = oauth.fetch_request_token(url)
-        resource_owner_oauth_token = response.get('oauth_token')
-        resource_owner_oauth_token_secret = response.get('oauth_token_secret')
-    except requests.exceptions.RequestException as e:
-        print(e)
-        sys.exit(120)
+    retries_amount = 2
     
-    return resource_owner_oauth_token, resource_owner_oauth_token_secret
+    while retries_amount > 0:
+        try:
+            oauth = OAuth1Session(CONSUMER_KEY, client_secret=CONSUMER_SECRET, callback_uri='oob')
+            oauth.proxies = {'all': proxy}
+
+            url = "https://api.twitter.com/oauth/request_token"
+
+            try:
+                response = oauth.fetch_request_token(url)
+                resource_owner_oauth_token = response.get('oauth_token')
+                resource_owner_oauth_token_secret = response.get('oauth_token_secret')
+            except requests.exceptions.RequestException as e:
+                print(e)
+                sys.exit(120)
+        except Exception:
+            print("Cannot get twitter requests token, retrying...")
+            retries_amount -= 1
+        
+        return resource_owner_oauth_token, resource_owner_oauth_token_secret
 
 def get_user_authorization_url(resource_owner_oauth_token):
     authorization_url = f"https://api.twitter.com/oauth/authorize?oauth_token={resource_owner_oauth_token}"
