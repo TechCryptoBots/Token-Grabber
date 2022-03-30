@@ -7,7 +7,7 @@ To use it, simply put the following data in following files:
 
 You can also fill out only discord or only twitter accounts, in this case the bot will grab tokens only for given accounts.
 
-To launch run you need Python 3.9+
+To launch you need Python 3.9+
 
 After installing run in console:
 ```
