@@ -17,7 +17,7 @@ python main.py
 The bot will output `accounts.json`. It contains tokens and more other blank parameters for each account in JSON format. The file can be loaded directly to our Gleam Bot that automates the filling of gleam forms. If you are interested contact @dmdeth in Telegram
 
 # Warning regarding Discord accounts
-There is a problem with Discord accounts because of ip-check from Discord. If you want to retrieve tokens for Discord accounts
+There is a problem with Discord accounts because of ip-check from Discord. If you want to retrieve tokens for Discord accounts, you have to login at least once from your IP (or from proxy IP, if you use proxy). Discord sends confirmation link to your email and bot can't deal with it right now, but probably will be in the future (if anybody wants to contribute on this, you are welcome)
 
 # Troubleshooting
 If yout have any problems with the script, visit our Telegram Channel @tech_crypt0 for FAQ or contact @dmdeth in telegram directly
