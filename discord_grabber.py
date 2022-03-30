@@ -1,7 +1,7 @@
 import json
 import requests
 
-def get_discord_token(account):
+def get_discord_token(account, proxy=""):
     if account["username"] == "" or account["password"] == "":
         return ""
     
@@ -14,7 +14,7 @@ def get_discord_token(account):
         "content-type": "application/json"
     }
         
-    r = requests.post("https://discord.com/api/v9/auth/login", headers=headers, data=json.dumps(data))
+    r = requests.post("https://discord.com/api/v9/auth/login", headers=headers, data=json.dumps(data), proxies={"http": proxy})
     if r.status_code == 200:
         json_response = r.json()
         token = json_response["token"]

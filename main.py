@@ -1,6 +1,3 @@
-from re import M
-from weakref import proxy
-import requests
 import json
 from account import Account
 from discord_grabber import get_discord_token
@@ -27,17 +24,8 @@ def load_data_from_file(filename, line_reader_function):
         
     return credentials
 
-# def load_proxies_from_file(filename):
-#     print(f"Loading proxies from {filename}")
-#     proxies = list()
-#     i = 1
-#     with open(filename, "r") as f:
-#         line = f.readline().replace(" ", "")
-#         proxies.append(line)
-#         i += 1
-#     return proxies
 
-def load_credentials(discord_filename, twitter_filename, proxy_filename=""):
+def load_accounts(discord_filename, twitter_filename, proxy_filename=""):
     credentials = list()
     
     def discord_reader_function(line):
@@ -60,7 +48,7 @@ def load_credentials(discord_filename, twitter_filename, proxy_filename=""):
     twitter_credentials = load_data_from_file(twitter_filename, twitter_reader_function)
     proxies = []
     if proxy_filename != "":
-        proxies = load_data_from_file(proxy_filename, lambda line: {"proxy": line})
+        proxies = load_data_from_file(proxy_filename, lambda line: line)
     for i in range(max(len(discord_credentials), len(twitter_credentials))):
         account = {}
         
@@ -72,6 +60,8 @@ def load_credentials(discord_filename, twitter_filename, proxy_filename=""):
         
         if i < len(proxies):
             account["proxy"] = proxies[i]
+        else:
+            account["proxy"] = ""
         
         credentials.append(account)
     
@@ -88,17 +78,18 @@ def save_accounts_state(accounts):
 
 if __name__ == "__main__":
     
-    credentials_accounts = load_credentials("discord_accounts.txt", "twitter_accounts.txt")
+    credentials_accounts = load_accounts("discord_accounts.txt", "twitter_accounts.txt", "proxies.txt")
     accounts = []
     
     for credentials_account in tqdm(credentials_accounts):
-        discord_token = get_discord_token(credentials_account["discord"]) if credentials_account.get("discord") else ""
-        twitter_auth_token, twitter_access_token = get_twitter_tokens(credentials_account["twitter"]) if credentials_account.get("twitter") else ("", "")
+        discord_token = get_discord_token(credentials_account["discord"], credentials_account["proxy"]) if credentials_account.get("discord") else ""
+        twitter_auth_token, twitter_access_token = get_twitter_tokens(credentials_account["twitter"], credentials_account["proxy"]) if credentials_account.get("twitter") else ("", "")
         
         account = Account()
         account.discord_token = discord_token 
         account.twitter_token = twitter_auth_token 
         account.twitter_access_token = twitter_access_token
+        account.proxy = credentials_account["proxy"]
         accounts.append(account)
         
         save_accounts_state(accounts)

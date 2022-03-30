@@ -10,9 +10,10 @@ CONSUMER_KEY = "usEig2joNLSMsFP8gYsH8SExY"
 CONSUMER_SECRET = "PTkxtqzZB9mdT8OccIrs2Dh7zOtI8CQyAqyyLid7axQtASxGGB"
 
 # Request an OAuth Request Token. This is the first step of the 3-legged OAuth flow. This generates a token that you can use to request user authorization for access.
-def request_token():
+def request_token(proxy=""):
 
     oauth = OAuth1Session(CONSUMER_KEY, client_secret=CONSUMER_SECRET, callback_uri='oob')
+    oauth.proxies = {'all': proxy}
 
     url = "https://api.twitter.com/oauth/request_token"
 
@@ -30,13 +31,14 @@ def get_user_authorization_url(resource_owner_oauth_token):
     authorization_url = f"https://api.twitter.com/oauth/authorize?oauth_token={resource_owner_oauth_token}"
     return authorization_url
 
-def get_user_access_tokens(resource_owner_oauth_token, resource_owner_oauth_token_secret, authorization_pin):
+def get_user_access_tokens(resource_owner_oauth_token, resource_owner_oauth_token_secret, authorization_pin, proxy=""):
 
     oauth = OAuth1Session(CONSUMER_KEY, 
                             client_secret=CONSUMER_SECRET, 
                             resource_owner_key=resource_owner_oauth_token, 
                             resource_owner_secret=resource_owner_oauth_token_secret, 
                             verifier=authorization_pin)
+    oauth.proxies = {'all': proxy}
     
     url = "https://api.twitter.com/oauth/access_token"
 
@@ -48,17 +50,25 @@ def get_user_access_tokens(resource_owner_oauth_token, resource_owner_oauth_toke
 
     return(access_token, access_token_secret, user_id, screen_name)
 
-def get_webdriver():
+def get_webdriver(proxy=""):
     options = ChromeOptions()
     options.add_argument('--headless')
     options.add_argument('window-size=1920x1080')    
     options.add_argument("--log-level=3")
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
-    driver = Chrome(options=options)
+    
+    wire_options = dict()
+    if proxy != "":
+        wire_options["proxy"] = {
+            "http": proxy,
+            'no_proxy': 'localhost,127.0.0.1' # excludes
+        }
+    
+    driver = Chrome(options=options, seleniumwire_options=wire_options)
     return driver
 
-def get_authorization_token_and_pin(authorization_url: str, account: dict):
-    driver = get_webdriver()
+def get_authorization_token_and_pin(authorization_url: str, account: dict, proxy=""):
+    driver = get_webdriver(proxy)
     driver.get(authorization_url)
     
     # Authorize with credentials
@@ -89,16 +99,16 @@ def get_authorization_token_and_pin(authorization_url: str, account: dict):
     auth_token = driver.get_cookie("auth_token")["value"]
     return auth_token, pin
 
-def get_twitter_tokens(account: dict):
+def get_twitter_tokens(account: dict, proxy=""):
     if account["username"] == "" or account["password"] == "":
         return "", ""
     
     try:
-        resource_owner_oauth_token, resource_owner_oauth_token_secret = request_token()
+        resource_owner_oauth_token, resource_owner_oauth_token_secret = request_token(proxy=proxy)
         authorization_url = get_user_authorization_url(resource_owner_oauth_token)
-        auth_token, pin = get_authorization_token_and_pin(authorization_url, account)
+        auth_token, pin = get_authorization_token_and_pin(authorization_url, account, proxy=proxy)
         if pin != "":
-            access_token, access_token_secret, user_id, screen_name = get_user_access_tokens(resource_owner_oauth_token, resource_owner_oauth_token_secret, pin)
+            access_token, access_token_secret, user_id, screen_name = get_user_access_tokens(resource_owner_oauth_token, resource_owner_oauth_token_secret, pin, proxy=proxy)
             return auth_token, access_token
         else: 
             return auth_token, ""
