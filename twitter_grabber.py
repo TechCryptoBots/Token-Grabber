@@ -20,11 +20,12 @@ def request_token(proxy=""):
             response = oauth.fetch_request_token(url)
             resource_owner_oauth_token = response.get('oauth_token')
             resource_owner_oauth_token_secret = response.get('oauth_token_secret')
-        except Exception:
+        except Exception as e:
             print("Cannot get twitter requests token, retrying...")
+            print(e)
             retries_amount -= 1
             if retries_amount == 0:
-                raise Exception("Couldn't get twitter requests token") 
+                raise Exception("Maximal retries number reached") 
         
         return resource_owner_oauth_token, resource_owner_oauth_token_secret
 
@@ -113,7 +114,8 @@ def get_twitter_tokens(account: dict, proxy=""):
             return auth_token, access_token
         else: 
             return auth_token, ""
-    except Exception:
+    except Exception as e:
         print(f"\nError during getting twitter token for account {account}")
+        print(e)
         return None, None
     
