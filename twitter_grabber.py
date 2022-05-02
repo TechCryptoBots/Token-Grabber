@@ -1,9 +1,9 @@
 from requests_oauthlib import OAuth1Session
-import requests
-import sys
 from seleniumwire.webdriver import Chrome, ChromeOptions
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import WebDriverException
+from webdriver_manager.chrome import ChromeDriverManager
+
 
 CONSUMER_KEY = "usEig2joNLSMsFP8gYsH8SExY"
 CONSUMER_SECRET = "PTkxtqzZB9mdT8OccIrs2Dh7zOtI8CQyAqyyLid7axQtASxGGB"
@@ -66,7 +66,7 @@ def get_webdriver(proxy=""):
             'no_proxy': 'localhost,127.0.0.1' # excludes
         }
     
-    driver = Chrome(options=options, seleniumwire_options=wire_options)
+    driver = Chrome(ChromeDriverManager().install(), options=options, seleniumwire_options=wire_options)
     return driver
 
 def get_authorization_token_and_pin(authorization_url: str, account: dict, proxy=""):

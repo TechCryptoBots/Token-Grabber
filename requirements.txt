@@ -1,3 +1,4 @@
 selenium-wire
 requests-oauthlib
 tqdm
+webdriver-manager
