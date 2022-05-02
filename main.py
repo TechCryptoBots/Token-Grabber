@@ -86,9 +86,9 @@ if __name__ == "__main__":
         twitter_auth_token, twitter_access_token = get_twitter_tokens(credentials_account["twitter"], credentials_account["proxy"]) if credentials_account.get("twitter") else ("", "")
         
         account = Account()
-        account.discord_token = discord_token 
-        account.twitter_token = twitter_auth_token 
-        account.twitter_access_token = twitter_access_token
+        account.discord_token = discord_token if discord_token else ""
+        account.twitter_token = twitter_auth_token if twitter_auth_token else ""
+        account.twitter_access_token = twitter_access_token if twitter_access_token else ""
         account.proxy = credentials_account["proxy"]
         accounts.append(account)
         
